@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello, WebRTC!</title>
+
+    <style>
+        body {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            overflow: hidden;
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <video height="100%" autoplay></video>
+
+    <script>
+        navigator.getUserMedia = navigator.getUserMedia ||
+                                 navigator.webkitGetUserMedia ||
+                                 navigator.mozGetUserMedia ||
+                                 navigator.msGetUserMedia;
+
+        if (typeof navigator.getUserMedia === 'function') {
+            navigator.getUserMedia({ video: true }, function (stream) {
+                var video = document.querySelector('video');
+                video.src = window.URL.createObjectURL(stream);
+            }, function (err) {
+                console.log('Error: ', err);
+            });
+        } else {
+            console.log('WebRTC navigator.getUserMedia() is not supported in your browser.');
+        }
+    </script>
+</body>
+</html>
