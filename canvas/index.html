@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello, WebRTC!</title>
+</head>
+<body>
+    <video width="640px" height="480px" autoplay></video>
+    <canvas width="640px" height="480px"></canvas>
+    <br><button onclick="capture()">Capture</button>
+
+    <script>
+        navigator.getUserMedia = navigator.getUserMedia ||
+                                 navigator.webkitGetUserMedia ||
+                                 navigator.mozGetUserMedia ||
+                                 navigator.msGetUserMedia;
+
+        var video = document.querySelector('video');
+        var canvas = document.querySelector('canvas');
+        var ctx = canvas.getContext('2d');
+        var stream = null;
+
+        if (typeof navigator.getUserMedia === 'function') {
+            var options = {
+                video: {
+                    mandatory: {
+                        maxHeight: 480,
+                        maxWidth: 640
+                    }
+                }
+            };
+
+            navigator.getUserMedia(options, function (s) {
+                stream = s;
+                video.src = window.URL.createObjectURL(stream);
+            }, function (err) {
+                console.log('Error: ', err);
+            });
+        } else {
+            console.log('WebRTC navigator.getUserMedia() is not supported in your browser.');
+        }
+
+        function capture() {
+            if (stream !== null) {
+                ctx.drawImage(video, 0, 0);
+            }
+        }
+    </script>
+</body>
+</html>
