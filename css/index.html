@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello, WebRTC!</title>
+
+    <style>
+        body {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            overflow: hidden;
+            padding: 0;
+            margin: 0;
+        }
+
+        video, form {
+            float: left;
+        }
+
+        .gray {
+            -webkit-filter: grayscale(1);
+            -moz-filter: grayscale(1);
+            -o-filter: grayscale(1);
+            -ms-filter: grayscale(1);
+            filter: grayscale(1);
+        }
+
+        .sepia {
+            -webkit-filter: sepia(1);
+            -moz-filter: sepia(1);
+            -o-filter: sepia(1);
+            -ms-filter: sepia(1);
+            filter: sepia(1);
+        }
+
+        .blur {
+            -webkit-filter: blur(3px);
+            -moz-filter: blur(3px);
+            -o-filter: blur(3px);
+            -ms-filter: blur(3px);
+            filter: blur(3px);
+        }
+    </style>
+</head>
+<body>
+    <video width="640px" height="480px" autoplay></video>
+    <form name="effects">
+      <input type="radio" name="effect" value="no" checked>No effects
+      <br>
+      <input type="radio" name="effect" value="gray">Gray
+      <br>
+      <input type="radio" name="effect" value="sepia">Sepia
+      <br>
+      <input type="radio" name="effect" value="blur">Blur
+    </form>
+
+    <script>
+        navigator.getUserMedia = navigator.getUserMedia ||
+                                 navigator.webkitGetUserMedia ||
+                                 navigator.mozGetUserMedia ||
+                                 navigator.msGetUserMedia;
+
+        var video = document.querySelector('video');
+
+        if (typeof navigator.getUserMedia === 'function') {
+            navigator.getUserMedia({ video: true }, function (stream) {
+                video.src = window.URL.createObjectURL(stream);
+            }, function (err) {
+                console.log('Error: ', err);
+            });
+        } else {
+            console.log('WebRTC navigator.getUserMedia() is not supported in your browser.');
+        }
+
+        var effects = document.effects.effect;
+
+        for (var i = 0; i < effects.length; i++) {
+            effects[i].onchange = function (event) {
+                video.className = event.target.value;
+            };
+        }
+    </script>
+</body>
+</html>
