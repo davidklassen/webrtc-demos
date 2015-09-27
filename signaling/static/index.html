@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello, WebRTC!</title>
+
+    <style>
+        body {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            overflow: hidden;
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hello!</h1>
+    <script src="/socket.io/socket.io.js"></script>
+    <div id="box1">
+        <textarea id="user1" cols="30" rows="10"></textarea>
+        <button id="send1">Send</button>
+        <div id="log1"></div>
+    </div>
+
+    <div id="box2">
+        <textarea id="user2" cols="30" rows="10"></textarea>
+        <button id="send2">Send</button>
+        <div id="log2"></div>
+    </div>
+    <script>
+      var socket = io();
+    </script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <div class="container">
+        <video id="local" width="400px" height="300px" autoplay></video>
+        <video id="remote" width="400px" height="300px" autoplay></video>
+    </div>
+    <div class="container">
+        <textarea name="" id="" cols="120" rows="26"></textarea>
+        <br>
+        <button id="offer">create offer</button>
+        <br>
+        <button id="answer">create answer</button>
+        <br>
+        <button id="remote-desc">set remote description</button>
+    </div>
+
+    <script>
+        var localVideo = document.getElementById('local');
+        var remoteVideo = document.getElementById('remote');
+        var createOfferButton = document.getElementById('offer');
+        var createAnswerButton = document.getElementById('answer');
+        var setRemoteDescriptionButton = document.getElementById('remote-desc');
+        var textarea = document.querySelector('textarea');
+        var pc = null;
+
+        createAnswerButton.disabled = true;
+
+        createOfferButton.onclick = function () {
+            pc._pc.createOffer(function (description) {
+                pc._pc.setLocalDescription(description);
+            });
+
+            pc.ready = function (description) {
+                textarea.value = JSON.stringify(pc.getLocalDescription());
+            };
+        };
+
+        createAnswerButton.onclick = function () {
+            pc._pc.createAnswer(function (description) {
+                pc._pc.setLocalDescription(description);
+            });
+
+            pc.ready = function (description) {
+                textarea.value = JSON.stringify(pc.getLocalDescription());
+            };
+        };
+
+        setRemoteDescriptionButton.onclick = function () {
+            var description = new RTCSessionDescription(JSON.parse(textarea.value));
+
+            pc._pc.setRemoteDescription(description, function () {
+                createAnswerButton.disabled = false;
+            }, function (err) {
+                console.log('Error setting remote description.', err);
+            });
+        };
+
+        function PeerConnection(stream) {
+            this._pc = new webkitRTCPeerConnection({
+                'iceServers': [
+                    {url:'stun:stun.l.google.com:19302'},
+                    {
+                        url: 'turn:192.158.29.39:3478?transport=udp',
+                        credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+                        username: '28224511:1379330808'
+                    },
+                    {
+                        url: 'turn:192.158.29.39:3478?transport=tcp',
+                        credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+                        username: '28224511:1379330808'
+                    }
+                ]
+            });
+
+            this._pc.onicecandidate = function (event) {
+                if (event.candidate == null) {
+                    this.ready(this._pc.localDescription);
+                }
+            }.bind(this);
+
+            this._pc.onaddstream = function (event) {
+                remoteVideo.src = URL.createObjectURL(event.stream);
+            };
+
+            this._pc.addStream(stream);
+
+            this.getLocalDescription = function () {
+                return this._pc.localDescription;
+            }.bind(this);
+        }
+
+        navigator.getUserMedia = navigator.getUserMedia ||
+                                 navigator.webkitGetUserMedia ||
+                                 navigator.mozGetUserMedia ||
+                                 navigator.msGetUserMedia;
+
+        if (typeof navigator.getUserMedia === 'function') {
+            navigator.getUserMedia({ video: true }, function (stream) {
+                localVideo.src = window.URL.createObjectURL(stream);
+
+                pc = new PeerConnection(stream);
+            }, function (err) {
+                console.log('Error: ', err);
+            });
+        } else {
+            console.log('WebRTC navigator.getUserMedia() is not supported in your browser.');
+        }
+    </script>
+</body>
+</html>
