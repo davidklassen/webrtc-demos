@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Document</title>
+    <title>WebRTC peer-to-peer</title>
+
 </head>
 <body>
     <div class="container">
@@ -12,98 +13,123 @@
     <div class="container">
         <textarea name="" id="" cols="120" rows="26"></textarea>
         <br>
-        <button id="offer">create offer</button>
+        <button id="call">call</button>
         <br>
-        <button id="answer">create answer</button>
+        <button id="offer">receive offer</button>
         <br>
-        <button id="remote-desc">set remote description</button>
+        <button id="answer">receive answer</button>
     </div>
 
     <script>
-        var localVideo = document.getElementById('local');
-        var remoteVideo = document.getElementById('remote');
-        var createOfferButton = document.getElementById('offer');
-        var createAnswerButton = document.getElementById('answer');
-        var setRemoteDescriptionButton = document.getElementById('remote-desc');
-        var textarea = document.querySelector('textarea');
-        var pc = null;
+        function PeerConnection(config, signalingChannel) {
+            this._pc = new webkitRTCPeerConnection(config);
+            this._signalingChannel = signalingChannel;
 
-        createAnswerButton.disabled = true;
+            this._signalingChannel.onoffer = function (offer) {
+                this._pc.setRemoteDescription(offer, function () {
+                    this._pc.createAnswer(function (answer) {
+                        this._pc.setLocalDescription(answer);
+                    }.bind(this));
+                }.bind(this));
+            }.bind(this);
 
-        createOfferButton.onclick = function () {
-            pc._pc.createOffer(function (description) {
-                pc._pc.setLocalDescription(description);
-            });
-
-            pc.ready = function (description) {
-                textarea.value = JSON.stringify(pc.getLocalDescription());
-            };
-        };
-
-        createAnswerButton.onclick = function () {
-            pc._pc.createAnswer(function (description) {
-                pc._pc.setLocalDescription(description);
-            });
-
-            pc.ready = function (description) {
-                textarea.value = JSON.stringify(pc.getLocalDescription());
-            };
-        };
-
-        setRemoteDescriptionButton.onclick = function () {
-            var description = new RTCSessionDescription(JSON.parse(textarea.value));
-
-            pc._pc.setRemoteDescription(description, function () {
-                createAnswerButton.disabled = false;
-            }, function (err) {
-                console.log('Error setting remote description.', err);
-            });
-        };
-
-        function PeerConnection(stream) {
-            this._pc = new webkitRTCPeerConnection({
-                'iceServers': [
-                    {url:'stun:stun.l.google.com:19302'},
-                    {
-                        url: 'turn:192.158.29.39:3478?transport=udp',
-                        credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-                        username: '28224511:1379330808'
-                    },
-                    {
-                        url: 'turn:192.158.29.39:3478?transport=tcp',
-                        credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-                        username: '28224511:1379330808'
-                    }
-                ]
-            });
+            this._signalingChannel.onanswer = function (anwser) {
+                this._pc.setRemoteDescription(anwser);
+            }.bind(this);
 
             this._pc.onicecandidate = function (event) {
                 if (event.candidate == null) {
-                    this.ready(this._pc.localDescription);
+                    this._signalingChannel.send(this._pc.localDescription);
                 }
             }.bind(this);
 
             this._pc.onaddstream = function (event) {
-                remoteVideo.src = URL.createObjectURL(event.stream);
-            };
-
-            this._pc.addStream(stream);
-
-            this.getLocalDescription = function () {
-                return this._pc.localDescription;
+                this.onaddstream(event.stream);
             }.bind(this);
         }
 
+        PeerConnection.prototype.call = function () {
+            this._pc.createOffer(function (offer) {
+                this._pc.setLocalDescription(offer);
+            }.bind(this));
+        };
+
+        PeerConnection.prototype.addStream = function (stream) {
+            this._pc.addStream(stream);
+        };
+    </script>
+
+    <script>
+        var localVideo = document.getElementById('local');
+        var remoteVideo = document.getElementById('remote');
+        var callButton = document.getElementById('call');
+        var receiveOfferButton = document.getElementById('offer');
+        var receiveAnswerButton = document.getElementById('answer');
+        var textarea = document.querySelector('textarea');
+
+        var STUN = [
+            { url:'stun:stun.l.google.com:19302' },
+            { url:'stun:stun1.l.google.com:19302' },
+            { url:'stun:stun2.l.google.com:19302' },
+            { url:'stun:stun01.sipphone.com' },
+            { url:'stun:stun.ekiga.net' },
+            { url:'stun:stun.fwdnet.net' }
+        ];
+        var TURN = [
+            {
+                url: 'turn:192.158.29.39:3478?transport=udp',
+                credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+                username: '28224511:1379330808'
+            },
+            {
+                url: 'turn:192.158.29.39:3478?transport=tcp',
+                credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+                username: '28224511:1379330808'
+            },
+            {
+                url: 'turn:numb.viagenie.ca',
+                credential: 'muazkh',
+                username: 'webrtc@live.com'
+            }
+        ];
+
+        function SignalingChannel(textarea) {
+            this._textarea = textarea;
+        }
+
+        SignalingChannel.prototype.send = function (description) {
+            this._textarea.value = JSON.stringify(description);
+        };
+
+        var sc = new SignalingChannel(textarea);
+        var pc = new PeerConnection({ 'iceServers': STUN.concat(TURN) }, sc);
+        pc.onaddstream = function (stream) {
+            remoteVideo.src = URL.createObjectURL(stream);
+        };
+
+        callButton.onclick = function () {
+            pc.call();
+        };
+
+        receiveOfferButton.onclick = function () {
+            var offer = new RTCSessionDescription(JSON.parse(textarea.value));
+            sc.onoffer(offer);
+        };
+
+        receiveAnswerButton.onclick = function () {
+            var answer = new RTCSessionDescription(JSON.parse(textarea.value));
+            sc.onanswer(answer);
+        };
+
         navigator.getUserMedia = navigator.getUserMedia ||
-                                 navigator.webkitGetUserMedia ||
-                                 navigator.mozGetUserMedia ||
-                                 navigator.msGetUserMedia;
+                navigator.webkitGetUserMedia ||
+                navigator.mozGetUserMedia ||
+                navigator.msGetUserMedia;
 
         if (typeof navigator.getUserMedia === 'function') {
             navigator.getUserMedia({ video: true }, function (stream) {
                 localVideo.src = window.URL.createObjectURL(stream);
-
-                pc = new PeerConnection(stream);
+                pc.addStream(stream);
             }, function (err) {
                 console.log('Error: ', err);
             });
