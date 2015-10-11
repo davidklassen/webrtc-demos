@@ -1,0 +1,61 @@
+WebRTC: Коммуникации в реальном времени.
+Обзор и демонстрация возможностей WebRTC - работа с видео и peer-to-peer соединения.
+10 Oct 2015
+
+David Klassen
+f0rk.tt@gmail.com
+
+* WebRTC API's
+
+MediaStream
+
+.code gum.js
+
+PeerConnection
+
+.code pc.js
+
+* MediaStream Demo
+
+.link http://127.0.0.1:8080/hello-world/ Hello, World!
+.link http://127.0.0.1:8080/canvas/ Canvas
+.link http://127.0.0.1:8080/css/ CSS
+
+* PeerConnection и его протоколы
+
+SDP (Session Description Protocol)
+RTP (Real-time Transport Protocol)
+RTCP (RTP Control Protocol)
+
+* PeerConnection Demo
+
+.link http://127.0.0.1:8888/ Hello, World!
+
+* Что такое peer-to-peer?
+
+.image p2p.png
+
+* Реальность
+
+.image nat.png
+
+* STUN (Session Traversal Utilities for NAT)
+
+.image stun.png
+
+* TURN (Traversal Using Relays around NAT)
+
+.image turn.png
+
+* Signalling
+
+.image signaling.png
+
+* Потрогаем все это руками
+
+.link http://127.0.0.1:8080/peer-to-peer/ Hello, World!
+
+* Что еще?
+
+DataChannel
+Media Servers (kurento)
